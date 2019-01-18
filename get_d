@@ -1,0 +1,9 @@
+function distance=get_d(device_position,n1,n2)
+ 
+%calculate the eclidian minimum distance between two point
+x=device_position(1,:);
+y=device_position(2,:);
+ 
+distance=sqrt((y(n2)-y(n1))^2+(x(n2)-x(n1))^2);
+ 
+end
