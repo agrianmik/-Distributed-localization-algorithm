@@ -1,0 +1,151 @@
+clear all
+clc
+ 
+%Cluster Localization of Sensor nodes
+ 
+norm_count=36; %total number of the localize devices
+ 
+[num,txt,raw,]=xlsread('t2.6x6.e5.m75.csv'); %Excel file
+device=raw(1,:);
+device_position=[];
+Quadsi=[];
+ 
+%Extracting all point of Localization devices
+for each =1:numel(device)
+    data=cell2mat(device(each));
+    x=str2num(data(8:10));
+    y=str2num(data(14:16));
+    
+    if (isempty(x) || isempty(y))
+       y=str2num(data(15:17));
+       
+    end
+    
+    if (isempty(x) || isempty(y))
+       y=str2num(data(16:18));
+       
+    end
+    device_position=[device_position;x ,y];
+    
+    
+end
+ 
+device_position=device_position';
+ 
+%plot the position of the localized devices
+ 
+x=device_position(1,:); 
+y=device_position(2,:);
+figure(1)
+plot(x,y,'o')
+xlabel('x-axis')
+ylabel('y-label')
+ 
+%label the points on the graph
+ 
+for k=1:numel(x)
+       a=num2str(x(k));
+       b=num2str(y(k));
+       sensor=num2str(k);
+       c=strcat('s',sensor,'(',a,',',b,')');
+       text(x(k),y(k),c)
+     
+       hold on
+   end
+ 
+ 
+ 
+i=1; %set the first node, nodei=1
+ 
+ 
+ 
+%use reboust algorithm
+ 
+for j=1:norm_count
+    dij=get_d(device_position,i,j); %get the distance between node i and j
+    
+    %if there is no distance between i and j, then continue
+    if (dij==0)
+        continue;
+    end
+   
+    for k=1:norm_count
+          djk=get_d(device_position,j,k); %get distance between j and k
+          dik=get_d(device_position,i,k); %get distance between i and k
+        if (k==j || djk==0 || dik==0)
+           continue;
+        end
+            
+          
+         if(reboust(dij,dik,djk)==0) %check if dij,dik,djk is reboust else continue
+               continue;
+          end
+ 
+               
+             for l=1:norm_count
+                   dkl=get_d(device_position,k,l);
+                   
+                   if (l==k || l==j || dkl==0)
+                       continue;
+                   end
+                   
+                   dlj=get_d(device_position,l,j);
+                   if (dlj==0)  %if there is no distance between l and j, then continue
+                       continue;
+                   end
+                   
+                   dil=get_d(device_position,i,l);
+                   if (dil==0)  %if there is no distance between i and l, then continue
+                       continue;
+                   end
+                   
+                   %then check if all distance are reboust
+                   
+          if (reboust(djk,dkl,dlj)==1 && reboust(dij,dil,dlj)==1 && reboust(dik,dil,dkl)==1)
+          
+              %add reboust nodes to the Quadsi
+               Quadsi=[Quadsi;i,j,k,l];
+          end
+             end
+               
+    end
+    
+    
+ 
+end
+ 
+ 
+   figure(1) 
+   xx=x(Quadsi(1,:));
+   yy=y(Quadsi(1,:));
+   
+   
+   
+  %plot the reboust sensors
+  
+   
+for count=1:numel(Quadsi(:,1))
+    
+   figure(2) 
+   xx=x(Quadsi(count,:));
+   yy=y(Quadsi(count,:));
+  
+   plot(xx,yy,'o','MarkerSize',10)
+   
+   
+   xlabel('x-axis')
+   ylabel('y-axis')
+   title('Sensor Nodes')
+   l=Quadsi(count,:);
+    for k=1:numel(l)
+       a=num2str(xx(k));
+       b=num2str(yy(k));
+       sensor=num2str(l(k));
+       c=strcat('s',sensor,' ','(',a,',',b,')')
+       text(xx(k),yy(k),c)
+       hold on
+   end
+   hold on
+   
+end
+hold off
